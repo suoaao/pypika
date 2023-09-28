@@ -76,8 +76,8 @@ class CriterionTests(unittest.TestCase):
         self.assertEqual('"crit"."foo"=\'2000-01-01T12:30:55\'', str(c2))
 
     def test__criterion_eq_right(self):
-        c1 = 1 == Field("foo")
-        c2 = -1 == Field("foo", table=self.t)
+        c1 = Field("foo") == 1
+        c2 = Field("foo", table=self.t) == -1
 
         self.assertEqual('"foo"=1', str(c1))
         self.assertEqual('"crit"."foo"=-1', str(c2))
@@ -127,8 +127,8 @@ class CriterionTests(unittest.TestCase):
         self.assertEqual('"crit"."foo"<>\'2000-01-01T12:30:55\'', str(c2))
 
     def test__criterion_ne_right(self):
-        c1 = 1 != Field("foo")
-        c2 = -1 != Field("foo", table=self.t)
+        c1 = Field("foo") != 1
+        c2 = Field("foo", table=self.t) != -1
 
         self.assertEqual('"foo"<>1', str(c1))
         self.assertEqual('"crit"."foo"<>-1', str(c2))
@@ -157,8 +157,8 @@ class CriterionTests(unittest.TestCase):
         self.assertEqual('"crit"."foo"<\'2000-01-01T12:30:55\'', str(c2))
 
     def test__criterion_lt_right(self):
-        c1 = 1 > Field("foo")
-        c2 = -1 > Field("foo", table=self.t)
+        c1 = Field("foo") < 1
+        c2 = Field("foo", table=self.t) < -1
 
         self.assertEqual('"foo"<1', str(c1))
         self.assertEqual('"crit"."foo"<-1', str(c2))
@@ -187,8 +187,8 @@ class CriterionTests(unittest.TestCase):
         self.assertEqual('"crit"."foo">\'2000-01-01T12:30:55\'', str(c2))
 
     def test__criterion_gt_right(self):
-        c1 = 1 < Field("foo")
-        c2 = -1 < Field("foo", table=self.t)
+        c1 = Field("foo") > 1
+        c2 = Field("foo", table=self.t) > -1
 
         self.assertEqual('"foo">1', str(c1))
         self.assertEqual('"crit"."foo">-1', str(c2))
@@ -217,8 +217,8 @@ class CriterionTests(unittest.TestCase):
         self.assertEqual('"crit"."foo"<=\'2000-01-01T12:30:55\'', str(c2))
 
     def test__criterion_lte_right(self):
-        c1 = 1 >= Field("foo")
-        c2 = -1 >= Field("foo", table=self.t)
+        c1 = Field("foo") <= 1
+        c2 = Field("foo", table=self.t) <= -1
 
         self.assertEqual('"foo"<=1', str(c1))
         self.assertEqual('"crit"."foo"<=-1', str(c2))
@@ -247,8 +247,8 @@ class CriterionTests(unittest.TestCase):
         self.assertEqual('"crit"."foo">=\'2000-01-01T12:30:55\'', str(c2))
 
     def test__criterion_gte_right(self):
-        c1 = 1 <= Field("foo")
-        c2 = -1 <= Field("foo", table=self.t)
+        c1 = Field("foo") >= 1
+        c2 = Field("foo", table=self.t) >= -1
 
         self.assertEqual('"foo">=1', str(c1))
         self.assertEqual('"crit"."foo">=-1', str(c2))
@@ -339,7 +339,7 @@ class BetweenTests(unittest.TestCase):
     def test__between_number(self):
         c1 = Field("foo").between(0, 1)
         c2 = Field("foo", table=self.t).between(0, 1)
-        c3 = Field("foo")[0:1]
+        c3 = Field("foo")[:1]
 
         self.assertEqual('"foo" BETWEEN 0 AND 1', str(c1))
         self.assertEqual('"btw"."foo" BETWEEN 0 AND 1', str(c2))
@@ -348,7 +348,7 @@ class BetweenTests(unittest.TestCase):
     def test__between_with_alias(self):
         c1 = Field("foo").between(0, 1).as_('alias')
         c2 = Field("foo", table=self.t).between(0, 1).as_('alias')
-        c3 = Field("foo")[0:1].as_('alias')
+        c3 = Field("foo")[:1].as_('alias')
 
         self.assertEqual('"foo" BETWEEN 0 AND 1 "alias"', str(c1))
         self.assertEqual('"btw"."foo" BETWEEN 0 AND 1 "alias"', str(c2))
@@ -376,8 +376,8 @@ class BetweenTests(unittest.TestCase):
         self.assertEqual("\"foo\" BETWEEN '2000-01-01T00:00:00' AND '2000-12-31T23:59:59'", str(c3))
 
     def test__function_between(self):
-        c1 = fn.Coalesce(Field("foo"), 0)[0:1]
-        c2 = fn.Coalesce(Field("foo", table=self.t), 0)[0:1]
+        c1 = fn.Coalesce(Field("foo"), 0)[:1]
+        c2 = fn.Coalesce(Field("foo", table=self.t), 0)[:1]
 
         self.assertEqual('COALESCE("foo",0) BETWEEN 0 AND 1', str(c1))
         self.assertEqual('COALESCE("btw"."foo",0) BETWEEN 0 AND 1', str(c2))
@@ -756,7 +756,7 @@ class CriterionOperationsTests(unittest.TestCase):
         self.assertEqual('MOD("cx1"."foo",2)', str(f))
 
     def test_betweencriterion_replace_table(self):
-        f = self.table_abc.foo[0:1].replace_table(self.table_abc, self.table_efg)
+        f = self.table_abc.foo[:1].replace_table(self.table_abc, self.table_efg)
 
         self.assertEqual('"cx1"."foo" BETWEEN 0 AND 1', str(f))
 

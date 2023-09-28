@@ -178,8 +178,11 @@ class MySQLQueryBuilder(QueryBuilder):
         """
         return "SELECT {distinct}{modifier}{select}".format(
             distinct="DISTINCT " if self._distinct else "",
-            modifier="{} ".format(" ".join(self._modifiers)) if self._modifiers else "",
-            select=",".join(term.get_sql(with_alias=True, subquery=True, **kwargs) for term in self._selects),
+            modifier=f'{" ".join(self._modifiers)} ' if self._modifiers else "",
+            select=",".join(
+                term.get_sql(with_alias=True, subquery=True, **kwargs)
+                for term in self._selects
+            ),
         )
 
 
@@ -208,7 +211,7 @@ class MySQLLoadQueryBuilder:
         return querystring
 
     def _load_file_sql(self, **kwargs: Any) -> str:
-        return "LOAD DATA LOCAL INFILE '{}'".format(self._load_file)
+        return f"LOAD DATA LOCAL INFILE '{self._load_file}'"
 
     def _into_table_sql(self, **kwargs: Any) -> str:
         return " INTO TABLE `{}`".format(self._into_table.get_sql(**kwargs))
@@ -338,7 +341,7 @@ class VerticaCopyQueryBuilder:
         return 'COPY "{}"'.format(self._copy_table.get_sql(**kwargs))
 
     def _from_file_sql(self, **kwargs: Any) -> str:
-        return " FROM LOCAL '{}'".format(self._from_file)
+        return f" FROM LOCAL '{self._from_file}'"
 
     def _options_sql(self, **kwargs: Any) -> str:
         return " PARSER fcsvparser(header=false)"
@@ -754,27 +757,27 @@ class ClickHouseQuery(Query):
         )
 
     @classmethod
-    def drop_database(self, database: Union[Database, str]) -> "ClickHouseDropQueryBuilder":
+    def drop_database(cls, database: Union[Database, str]) -> "ClickHouseDropQueryBuilder":
         return ClickHouseDropQueryBuilder().drop_database(database)
 
     @classmethod
-    def drop_table(self, table: Union[Table, str]) -> "ClickHouseDropQueryBuilder":
+    def drop_table(cls, table: Union[Table, str]) -> "ClickHouseDropQueryBuilder":
         return ClickHouseDropQueryBuilder().drop_table(table)
 
     @classmethod
-    def drop_dictionary(self, dictionary: str) -> "ClickHouseDropQueryBuilder":
+    def drop_dictionary(cls, dictionary: str) -> "ClickHouseDropQueryBuilder":
         return ClickHouseDropQueryBuilder().drop_dictionary(dictionary)
 
     @classmethod
-    def drop_quota(self, quota: str) -> "ClickHouseDropQueryBuilder":
+    def drop_quota(cls, quota: str) -> "ClickHouseDropQueryBuilder":
         return ClickHouseDropQueryBuilder().drop_quota(quota)
 
     @classmethod
-    def drop_user(self, user: str) -> "ClickHouseDropQueryBuilder":
+    def drop_user(cls, user: str) -> "ClickHouseDropQueryBuilder":
         return ClickHouseDropQueryBuilder().drop_user(user)
 
     @classmethod
-    def drop_view(self, view: str) -> "ClickHouseDropQueryBuilder":
+    def drop_view(cls, view: str) -> "ClickHouseDropQueryBuilder":
         return ClickHouseDropQueryBuilder().drop_view(view)
 
 
@@ -830,7 +833,7 @@ class ClickHouseDropQueryBuilder(DropQueryBuilder):
         query = super().get_sql(**kwargs)
 
         if self._drop_target_kind != "DICTIONARY" and self._cluster_name is not None:
-            query += " ON CLUSTER " + format_quotes(self._cluster_name, super().QUOTE_CHAR)
+            query += f" ON CLUSTER {format_quotes(self._cluster_name, super().QUOTE_CHAR)}"
 
         return query
 

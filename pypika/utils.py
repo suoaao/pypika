@@ -51,10 +51,7 @@ def builder(func: Callable) -> Callable:
 
         # Return self if the inner function returns None.  This way the inner function can return something
         # different (for example when creating joins, a different builder is returned).
-        if result is None:
-            return self_copy
-
-        return result
+        return self_copy if result is None else result
 
     return _copy
 
@@ -77,7 +74,9 @@ def ignore_copy(func: Callable) -> Callable:
             "__setstate__",
             "__getnewargs__",
         ]:
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+            )
 
         return func(self, name)
 
@@ -93,8 +92,7 @@ def resolve_is_aggregate(values: List[Optional[bool]]) -> Optional[bool]:
     :return: If all values are True or None, True is returned.  If all values are None, None is returned. Otherwise,
         False is returned.
     """
-    result = [x for x in values if x is not None]
-    if result:
+    if result := [x for x in values if x is not None]:
         return all(result)
     return None
 

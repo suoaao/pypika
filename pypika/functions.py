@@ -23,9 +23,9 @@ class DistinctOptionFunction(AggregateFunction):
     def get_function_sql(self, **kwargs):
         s = super(DistinctOptionFunction, self).get_function_sql(**kwargs)
 
-        n = len(self.name) + 1
         if self._distinct:
-            return s[:n] + "DISTINCT " + s[n:]
+            n = len(self.name) + 1
+            return f"{s[:n]}DISTINCT {s[n:]}"
         return s
 
     @builder
@@ -35,7 +35,7 @@ class DistinctOptionFunction(AggregateFunction):
 
 class Count(DistinctOptionFunction):
     def __init__(self, param, alias=None):
-        is_star = isinstance(param, str) and "*" == param
+        is_star = isinstance(param, str) and param == "*"
         super(Count, self).__init__("COUNT", Star() if is_star else param, alias=alias)
 
 
@@ -200,7 +200,7 @@ class Concat(Function):
 
 class Insert(Function):
     def __init__(self, term, start, stop, subterm, alias=None):
-        term, start, stop, subterm = [term for term in [term, start, stop, subterm]]
+        term, start, stop, subterm = [term, start, stop, subterm]
         super(Insert, self).__init__("INSERT", term, start, stop, subterm, alias=alias)
 
 
