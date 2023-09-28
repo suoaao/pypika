@@ -71,7 +71,7 @@ class _AbstractMultiSearchString(Function, metaclass=abc.ABCMeta):
         sql = "{name}({args},[{patterns}])".format(
             name=self.name,
             args=",".join(args),
-            patterns=",".join(["'%s'" % i for i in self._patterns]),
+            patterns=",".join([f"'{i}'" for i in self._patterns]),
         )
         return format_alias_sql(sql, self.alias, **kwargs)
 
