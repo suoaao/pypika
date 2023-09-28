@@ -354,8 +354,8 @@ class ArithmeticTests(unittest.TestCase):
         self.assertEqual('SELECT "a"/("b"/("c"/2)) FROM "abc"', str(q2))
 
     def test__arithmetic_equality(self):
-        q1 = Q.from_("abc").select(F("a") / 2 == 2)
-        q2 = Q.from_(self.t).select(self.t.a / 2 == 2)
+        q1 = Q.from_("abc").select(F("a") == 4)
+        q2 = Q.from_(self.t).select(self.t.a == 4)
 
         self.assertEqual('SELECT "a"/2=2 FROM "abc"', str(q1))
         self.assertEqual('SELECT "a"/2=2 FROM "abc"', str(q2))
@@ -720,7 +720,7 @@ class DateFunctionsTests(unittest.TestCase):
         q = Q.from_(self.t).select(fn.Extract(date_part, self.t.foo))
 
         value = getattr(date_part, 'value', date_part)
-        self.assertEqual('SELECT EXTRACT(%s FROM "foo") FROM "abc"' % value, str(q))
+        self.assertEqual(f'SELECT EXTRACT({value} FROM "foo") FROM "abc"', str(q))
 
     def test_extract_microsecond(self):
         self._test_extract_datepart(DatePart.microsecond)

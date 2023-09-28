@@ -22,7 +22,9 @@ class ToFixedString(Function):
     def get_sql(self, with_alias=False, with_namespace=False, quote_char=None, dialect=None, **kwargs):
         sql = "{name}({field},{length})".format(
             name=self.name,
-            field=self._field if isinstance(self._field, Field) else "'%s'" % str(self._field),
+            field=self._field
+            if isinstance(self._field, Field)
+            else f"'{str(self._field)}'",
             length=self._length,
         )
         return format_alias_sql(sql, self.alias, **kwargs)
