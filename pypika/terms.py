@@ -381,9 +381,7 @@ class ValueWrapper(Term):
             return str.lower(str(value))
         if isinstance(value, uuid.UUID):
             return cls.get_formatted_value(str(value), **kwargs)
-        if value is None:
-            return "null"
-        return str(value)
+        return "null" if value is None else str(value)
 
     def get_sql(self, quote_char: Optional[str] = None, secondary_quote_char: str = "'", **kwargs: Any) -> str:
         sql = self.get_value_sql(quote_char=quote_char, secondary_quote_char=secondary_quote_char, **kwargs)
@@ -604,7 +602,7 @@ class Star(Field):
     ) -> str:
         if self.table and (with_namespace or self.table.alias):
             namespace = self.table.alias or getattr(self.table, "_table_name")
-            return "{}.*".format(format_quotes(namespace, quote_char))
+            return f"{format_quotes(namespace, quote_char)}.*"
 
         return "*"
 
@@ -647,9 +645,9 @@ class Array(Tuple):
         dialect = kwargs.get("dialect", None)
         values = ",".join(term.get_sql(**kwargs) for term in self.values)
 
-        sql = "[{}]".format(values)
+        sql = f"[{values}]"
         if dialect in (Dialects.POSTGRESQL, Dialects.REDSHIFT):
-            sql = "ARRAY[{}]".format(values) if len(values) > 0 else "'{}'"
+            sql = f"ARRAY[{values}]" if values != "" else "'{}'"
 
         return format_alias_sql(sql, self.alias, **kwargs)
 
@@ -767,9 +765,7 @@ class BasicCriterion(Criterion):
             left=self.left.get_sql(quote_char=quote_char, **kwargs),
             right=self.right.get_sql(quote_char=quote_char, **kwargs),
         )
-        if with_alias:
-            return format_alias_sql(sql, self.alias, **kwargs)
-        return sql
+        return format_alias_sql(sql, self.alias, **kwargs) if with_alias else sql
 
 
 class ContainsCriterion(Criterion):
@@ -974,13 +970,13 @@ class ComplexCriterion(BasicCriterion):
             right=self.right.get_sql(subcriterion=self.needs_brackets(self.right), **kwargs),
         )
 
-        if subcriterion:
-            return "({criterion})".format(criterion=sql)
-
-        return sql
+        return "({criterion})".format(criterion=sql) if subcriterion else sql
 
     def needs_brackets(self, term: Term) -> bool:
-        return isinstance(term, ComplexCriterion) and not term.comparator == self.comparator
+        return (
+            isinstance(term, ComplexCriterion)
+            and term.comparator != self.comparator
+        )
 
 
 class ArithmeticExpression(Term):
@@ -1049,14 +1045,7 @@ class ArithmeticExpression(Term):
         if left_op is None:
             # If the left expression is a single item.
             return False
-        if curr_op in self.add_order:
-            # If the current operator is '+' or '-'.
-            return False
-        # The current operator is '*' or '/'. If the left operator is '+' or '-', we need to add parentheses:
-        # e.g. (A + B) / ..., (A - B) / ...
-        # Otherwise, no parentheses are necessary:
-        # e.g. A * B / ..., A / B / ...
-        return left_op in self.add_order
+        return False if curr_op in self.add_order else left_op in self.add_order
 
     def right_needs_parens(self, curr_op, right_op) -> bool:
         """
@@ -1072,13 +1061,7 @@ class ArithmeticExpression(Term):
             return False
         if curr_op == Arithmetic.add:
             return False
-        if curr_op == Arithmetic.div:
-            return True
-        # The current operator is '*' or '-. If the right operator is '+' or '-', we need to add parentheses:
-        # e.g. ... - (A + B), ... - (A - B)
-        # Otherwise, no parentheses are necessary:
-        # e.g. ... - A / B, ... - A * B
-        return right_op in self.add_order
+        return True if curr_op == Arithmetic.div else right_op in self.add_order
 
     def get_sql(self, with_alias: bool = False, **kwargs: Any) -> str:
         left_op, right_op = [getattr(side, "operator", None) for side in [self.left, self.right]]
@@ -1198,9 +1181,7 @@ class Not(Criterion):
 
         def inner(inner_self, *args, **kwargs):
             result = item_func(inner_self, *args, **kwargs)
-            if isinstance(result, (Term,)):
-                return Not(result)
-            return result
+            return Not(result) if isinstance(result, (Term,)) else result
 
         return inner
 
@@ -1314,7 +1295,7 @@ class Function(Criterion):
                 else self.get_arg_sql(p, **kwargs)
                 for p in self.args
             ),
-            special=(" " + special_params_sql) if special_params_sql else "",
+            special=f" {special_params_sql}" if special_params_sql else "",
         )
 
     def get_sql(self, **kwargs: Any) -> str:
@@ -1490,11 +1471,7 @@ class IgnoreNullsAnalyticFunction(AnalyticFunction):
         self._ignore_nulls = True
 
     def get_special_params_sql(self, **kwargs: Any) -> Optional[str]:
-        if self._ignore_nulls:
-            return "IGNORE NULLS"
-
-        # No special params unless ignoring nulls
-        return None
+        return "IGNORE NULLS" if self._ignore_nulls else None
 
 
 class Interval(Node):
@@ -1583,7 +1560,7 @@ class Interval(Node):
             )
             expr = self.trim_pattern.sub("", expr)
             if self.is_negative:
-                expr = "-" + expr
+                expr = f"-{expr}"
 
             unit = (
                 "{largest}_{smallest}".format(
